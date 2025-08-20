@@ -1,0 +1,34 @@
+= Retrieval Augmented Generation - Vector + Graph RAG
+
+This repository showcases vector and graph retrieval augmented generation, highlighting the differences and design considerations of each.
+
+Also explores when vector+graph retrieval can fail and succeed based on questions asked.
+
+== Data set
+
+_Coming soon!_
+
+== Demo queries
+
+[source,shell]
+----
+http ":8080/vector?question=What are the risks that Apple faces?"
+
+http ":8080/graph?question=What are the risks that Apple faces?"
+
+http ":8080/vectorPlus?question=What are the risks that Apple faces?"
+
+http ":8080/graph?question=Which companies are most affected by banking regulations?"
+----
+
+== Presentations
+
+_Coming soon!_
+
+== Resources
+
+* Site: https://dev.neo4j.com/aura-java[Neo4j Aura^]
+* Documentation: https://docs.spring.io/spring-ai/reference/api/vectordbs/neo4j.html[Spring AI Neo4j Vector Store^]
+* Guide: https://neo4j.com/labs/genai-ecosystem/spring-ai[Spring AI Neo4j^]
+* Online training: https://graphacademy.neo4j.com/categories/llms/[GraphAcademy LLM courses^]
+* Documentation: https://platform.openai.com/docs/guides/embeddings[OpenAI Embeddings^]
