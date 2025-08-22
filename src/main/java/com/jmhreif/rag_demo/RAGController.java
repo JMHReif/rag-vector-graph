@@ -56,7 +56,6 @@ public class RAGController {
         System.out.println("----- Related 4 COMPANIES -----");
         System.out.println(companies.stream().map(chunk -> chunk.metadata().toString()).collect(Collectors.joining("\n")));
 
-
         List<Document> moreResults = vectorStore.similaritySearch(SearchRequest.builder().query(question).topK(20).build());
         List<Chunk> moreCompanies = ragRepository.getRelatedCompanies(moreResults.stream().map(Document::getId).collect(Collectors.toList()));
         System.out.println("----- Related 20 COMPANIES -----");
