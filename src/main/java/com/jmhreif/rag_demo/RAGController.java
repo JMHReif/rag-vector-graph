@@ -1,18 +1,12 @@
 package com.jmhreif.rag_demo;
 
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.vectorstore.neo4j.Neo4jVectorStore;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/")
@@ -20,62 +14,84 @@ public class RAGController {
     private final ChatClient chatClient;
     private final Neo4jVectorStore vectorStore;
     private final RAGRepository ragRepository;
+    private final SyncMcpToolCallbackProvider mcpProvider;
 
-    String prompt = """
-            Please use the documents provided in the Context section to answer the question.
-            
-            Question: {question}
-            
-            Context:
-            {context}
-            """;
-
-    public RAGController(ChatClient.Builder builder, Neo4jVectorStore vectorStore, RAGRepository ragRepository) {
-        this.chatClient = builder.build();
+    public RAGController(ChatClient.Builder builder, Neo4jVectorStore vectorStore, RAGRepository ragRepository,
+                         SyncMcpToolCallbackProvider provider, RAGTools ragTools) {
+        this.chatClient = builder
+                .defaultToolCallbacks(provider.getToolCallbacks())
+                .defaultTools(ragTools)
+                .build();
         this.vectorStore = vectorStore;
         this.ragRepository = ragRepository;
+        this.mcpProvider = provider;
+    }
+
+    @GetMapping("/debug/tools")
+    public String debugTools() {
+        var callbacks = mcpProvider.getToolCallbacks();
+        StringBuilder sb = new StringBuilder("Available MCP Tools:\n");
+        for (var callback : callbacks) {
+            sb.append("- ").append(callback.getToolDefinition().name()).append("\n");
+        }
+        return sb.toString();
     }
 
     @GetMapping("/vector")
     public String vector(@RequestParam String question) {
-        List<Document> results = vectorStore.similaritySearch(question);
-        System.out.println("----- Vector RESULTS -----");
-        System.out.println(results.stream().map(Document::toString).collect(Collectors.joining("\n")));
+        String vectorPrompt = """
+            Answer this question using vector search: %s
+            
+            Use the vectorSearch tool to find relevant documents.
+            """.formatted(question);
 
-        var template = new PromptTemplate(prompt)
-                .create(Map.of("question", question, "context", results));
-
-        return chatClient.prompt(template).call().content();
+        return chatClient.prompt()
+                .user(vectorPrompt)
+                .call()
+                .content();
     }
 
     //This method shows when vector retrieval is not a good fit
     @GetMapping("/vectorPlus")
-    public void vectorPlus(@RequestParam String question) {
-        List<Document> results = vectorStore.similaritySearch(SearchRequest.builder().query(question).build());
-        List<Chunk> companies = ragRepository.getRelatedCompanies(results.stream().map(Document::getId).collect(Collectors.toList()));
-        System.out.println("----- Related 4 COMPANIES -----");
-        System.out.println(companies.stream().map(chunk -> chunk.metadata().toString()).collect(Collectors.joining("\n")));
+    public String vectorPlus(@RequestParam String question) {
+        String vectorPlusPrompt = """
+            Use the vectorPlusComparison tool to get data comparing small vs large vector search result sets for: %s
+            
+            Please only output the results.
+            """.formatted(question);
 
-        List<Document> moreResults = vectorStore.similaritySearch(SearchRequest.builder().query(question).topK(20).build());
-        List<Chunk> moreCompanies = ragRepository.getRelatedCompanies(moreResults.stream().map(Document::getId).collect(Collectors.toList()));
-        System.out.println("----- Related 20 COMPANIES -----");
-        System.out.println(moreCompanies.stream().map(chunk -> chunk.metadata().toString()).collect(Collectors.joining("\n")));
+        return chatClient.prompt()
+                .user(vectorPlusPrompt)
+                .call()
+                .content();
     }
 
     @GetMapping("/graph")
     public String graph(@RequestParam String question) {
-        List<Document> results = vectorStore.similaritySearch(question);
+        String graphPrompt = """
+            Answer this question using graph-enriched search: %s
+            
+            Use the graphEnrichedSearch tool to find relevant documents with company and risk information.
+            """.formatted(question);
 
-        List<Chunk> graphResults = ragRepository.getRAGDocuments(
-                results.stream().map(Document::getId).collect(Collectors.toList())
-        );
-        System.out.println("----- Graph RESULTS -----");
-        System.out.println(graphResults.stream().map(chunk -> chunk.metadata().toString()).collect(Collectors.joining("\n")));
+        return chatClient.prompt()
+                .user(graphPrompt)
+                .call()
+                .content();
+    }
 
-        var template = new PromptTemplate(prompt)
-                .create(Map.of("question", question,
-                        "context", graphResults.stream().map(Chunk::toString).collect(Collectors.joining("\n"))));
+    @GetMapping("/text2cypher")
+    public String text2cypher(@RequestParam String question) {
+        String cypherPrompt = """
+            Generate a Cypher query for this question: %s
+            
+            First call get_neo4j_schema, then generate and execute a Cypher query using read_neo4j_cypher.
+            Show the Cypher query you're executing before showing results.
+            """.formatted(question);
 
-        return chatClient.prompt(template).call().content();
+        return chatClient.prompt()
+                .user(cypherPrompt)
+                .call()
+                .content();
     }
 }

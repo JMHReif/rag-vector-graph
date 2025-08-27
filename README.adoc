@@ -12,13 +12,26 @@ _Coming soon!_
 
 [source,shell]
 ----
+# Vector search
 http ":8080/vector?question=What are the risks that Apple faces?"
 
+# Vector search + graph retrieval
 http ":8080/graph?question=What are the risks that Apple faces?"
 
+# Why this is a bad vector search question :)
 http ":8080/vectorPlus?question=What are the risks that Apple faces?"
 
+# Why this is a better one :)
 http ":8080/graph?question=Which companies are most affected by banking regulations?"
+
+# Check available tools
+http ":8080/debug/tools"
+
+# Test text2cypher
+http ":8080/text2cypher?question=What companies are in the database?"
+
+# Pure text2cypher
+http ":8080/text2cypher?question=What 5 companies face the most risks?"
 ----
 
 == Presentations
