@@ -12,29 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 public class RAGController {
     private final ChatClient chatClient;
-    private final Neo4jVectorStore vectorStore;
-    private final RAGRepository ragRepository;
     private final SyncMcpToolCallbackProvider mcpProvider;
 
-    public RAGController(ChatClient.Builder builder, Neo4jVectorStore vectorStore, RAGRepository ragRepository,
-                         SyncMcpToolCallbackProvider provider, RAGTools ragTools) {
+    public RAGController(ChatClient.Builder builder, SyncMcpToolCallbackProvider provider, RAGTools ragTools) {
         this.chatClient = builder
                 .defaultToolCallbacks(provider.getToolCallbacks())
                 .defaultTools(ragTools)
                 .build();
-        this.vectorStore = vectorStore;
-        this.ragRepository = ragRepository;
         this.mcpProvider = provider;
-    }
-
-    @GetMapping("/debug/tools")
-    public String debugTools() {
-        var callbacks = mcpProvider.getToolCallbacks();
-        StringBuilder sb = new StringBuilder("Available MCP Tools:\n");
-        for (var callback : callbacks) {
-            sb.append("- ").append(callback.getToolDefinition().name()).append("\n");
-        }
-        return sb.toString();
     }
 
     @GetMapping("/vector")
@@ -78,6 +63,16 @@ public class RAGController {
                 .user(graphPrompt)
                 .call()
                 .content();
+    }
+
+    @GetMapping("/debug/tools")
+    public String debugTools() {
+        var callbacks = mcpProvider.getToolCallbacks();
+        StringBuilder sb = new StringBuilder("Available MCP Tools:\n");
+        for (var callback : callbacks) {
+            sb.append("- ").append(callback.getToolDefinition().name()).append("\n");
+        }
+        return sb.toString();
     }
 
     @GetMapping("/text2cypher")
