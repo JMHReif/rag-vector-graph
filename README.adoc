@@ -6,7 +6,9 @@ Also explores when vector+graph retrieval can fail and succeed based on question
 
 == Data set
 
-_Coming soon!_
+Data has been sourced and curated from SEC Edgar company financial filings. You can load the same data set using the script in the https://github.com/JMHReif/graph-demo-datasets/tree/main/secedgar[graph-demo-datasets code repository^].
+
+*Note:* This data set is small, so it will run perfectly fine on a small instance (like https://dev.neo4j.com/aura-java[Neo4j Aura^] free tier).
 
 == Demo queries
 
@@ -36,6 +38,7 @@ http ":8080/text2cypher?question=What 5 companies face the most risks?"
 
 == Presentations
 
+* https://speakerdeck.com/jmhreif/pass-or-play-what-does-genai-mean-for-the-developer[Seattle JUG meetup (Sep 2025)^]
 * https://speakerdeck.com/jmhreif/pass-or-play-what-does-genai-mean-for-the-java-developer-2eebd8f2-c88a-425f-a34c-0bd7a0ca88e2[Houston JUG meetup (Aug 2025)^]
 * https://speakerdeck.com/jmhreif/rag-accuracy-and-explainability-in-genai-applications-251e72c6-e500-4434-b7b1-0b1231eca02d[AI Collective Chicago meetup (Aug 2025)^]
 
